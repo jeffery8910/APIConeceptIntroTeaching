@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式 API 學習網站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            border-color: #3b82f6; /* Blue border for active tab */
+            color: #3b82f6;
+            background-color: #eff6ff; /* Light blue background for active tab */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .interactive-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease-in-out;
+        }
+        .interactive-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+         .btn-success {
+            background-color: #10b981; /* Green */
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        .btn-warning {
+            background-color: #f59e0b; /* Amber */
+            color: white;
+        }
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+        .btn-danger {
+            background-color: #ef4444; /* Red */
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            height: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            background-color: #3b82f6;
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+        .game-step {
+            display: none;
+        }
+        .game-step.active {
+            display: block;
+        }
+        /* Custom styles for better visual appeal */
+        h1, h2, h3 {
+            color: #1f2937; /* Darker text for headings */
+        }
+        p, label {
+            color: #4b5563; /* Slightly lighter text for paragraphs */
+            line-height: 1.6;
+        }
+        .icon-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .icon-text i {
+            color: #3b82f6;
+        }
+        .code-block {
+            background-color: #1f2937; /* Dark background for code */
+            color: #d1d5db; /* Light text for code */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        /* Tooltip styles */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip-icon {
+            cursor: help;
+            color: #6b7280; /* Gray color for icon */
+            margin-left: 4px;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #374151; /* Darker gray for tooltip background */
+            color: #fff;
+            text-align: left;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            border-radius: 6px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%; /* Position above the icon */
+            left: 50%;
+            margin-left: -110px; /* Center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip-text::after { /* Arrow */
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #374151 transparent transparent transparent;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .quiz-question-container {
+            /* Styles for individual question container if needed */
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="container mx-auto max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">🚀 探索 API 的奇妙世界 🌌</h1>
+            <p class="text-lg text-gray-600 mt-2">一個互動式的學習旅程，讓你輕鬆掌握 API 的核心概念！</p>
+        </header>
+
+        <div class="mb-6 flex flex-wrap justify-center gap-2 md:gap-4 border-b border-gray-300 pb-2">
+            <button class="tab-button active text-sm md:text-base font-semibold py-2 px-3 md:px-6 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 rounded-t-lg" onclick="openTab(event, 'tab1')"><i class="fas fa-puzzle-piece mr-2"></i>什麼是 API？</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-2 px-3 md:px-6 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 rounded-t-lg" onclick="openTab(event, 'tab2')"><i class="fas fa-sitemap mr-2"></i>API 的種類與用途</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-2 px-3 md:px-6 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 rounded-t-lg" onclick="openTab(event, 'tab3')"><i class="fas fa-gamepad mr-2"></i>打造你的 API (模擬)</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-2 px-3 md:px-6 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 rounded-t-lg" onclick="openTab(event, 'tab4')"><i class="fas fa-chart-line mr-2"></i>API 商業價值</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-2 px-3 md:px-6 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 rounded-t-lg" onclick="openTab(event, 'tab5')"><i class="fas fa-star mr-2"></i>優秀 API 的特質</button>
+        </div>
+
+        <div id="tab1" class="tab-content active">
+            <div class="interactive-card">
+                <h2 class="text-2xl font-bold mb-4">🤔 什麼是 API？</h2>
+                <p class="mb-4">API (Application Programming Interface)，中文是「應用程式介面」。你可以把它想像成餐廳裡的服務生：</p>
+                <div class="grid md:grid-cols-3 gap-4 text-center mb-6">
+                    <div class="p-4 bg-blue-50 rounded-lg shadow">
+                        <i class="fas fa-user fa-2x text-blue-500 mb-2"></i>
+                        <h3 class="font-semibold">你 (顧客)</h3>
+                        <p class="text-sm">想要點餐</p>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg shadow">
+                        <i class="fas fa-concierge-bell fa-2x text-green-500 mb-2"></i>
+                        <h3 class="font-semibold">服務生 (API)</h3>
+                        <p class="text-sm">傳達你的需求給廚房</p>
+                    </div>
+                    <div class="p-4 bg-yellow-50 rounded-lg shadow">
+                        <i class="fas fa-utensils fa-2x text-yellow-500 mb-2"></i>
+                        <h3 class="font-semibold">廚房 (另一套軟體)</h3>
+                        <p class="text-sm">根據需求準備餐點</p>
+                    </div>
+                </div>
+                <p class="mb-4">簡單來說，API 就是一套規則和協定，讓不同的軟體程式可以互相溝通和交換資料，而不需要知道對方內部的複雜運作細節。</p>
+                <div class="mt-6 p-4 bg-indigo-50 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-2 icon-text"><i class="fas fa-key"></i>API 的核心價值：</h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700">
+                        <li><strong class="text-indigo-600">互操作性：</strong> 讓不同的系統協同工作。</li>
+                        <li><strong class="text-indigo-600">效率提升：</strong> 開發者不需重複造輪子，可使用現成功能。</li>
+                        <li><strong class="text-indigo-600">創新加速：</strong> 快速整合不同服務，打造新應用。</li>
+                        <li><strong class="text-indigo-600">生態系建立：</strong> 讓其他開發者基於你的平台開發新服務。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab2" class="tab-content">
+            <div class="interactive-card">
+                <h2 class="text-2xl font-bold mb-4">🛠️ API 的種類與用途</h2>
+                <p class="mb-4">API 有很多種，但最常見的是 Web API，它們透過網際網路運作。它們被廣泛應用在各種場景：</p>
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div class="p-4 bg-gray-50 rounded-lg shadow hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-cloud-sun"></i>天氣預報 API</h3>
+                        <p class="text-sm">讓你的 App 或網站能顯示即時天氣資訊。</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg shadow hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-map-marked-alt"></i>地圖服務 API</h3>
+                        <p class="text-sm">在應用中嵌入地圖、規劃路線等 (如 Google Maps API)。</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg shadow hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fab fa-facebook"></i>社群登入 API</h3>
+                        <p class="text-sm">允許使用者用 Facebook, Google 帳號快速登入你的服務。</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg shadow hover:shadow-lg transition-shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-credit-card"></i>支付處理 API</h3>
+                        <p class="text-sm">讓你的網站能安全地處理線上付款 (如 Stripe API)。</p>
+                    </div>
+                </div>
+                <div id="apiQuizContainer" class="mt-6 p-4 bg-teal-50 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-2">小測驗：API 配對！ <span id="quizProgress" class="text-sm font-normal"></span></h3>
+                    <div id="quizQuestionArea" class="quiz-question-container">
+                        </div>
+                    <p id="quizResult" class="mt-3 font-semibold"></p>
+                    <button id="nextQuizQuestionBtn" class="btn btn-primary mt-3" onclick="nextQuizQuestion()" style="display:none;"><i class="fas fa-arrow-right mr-1"></i>下一題</button>
+                    <button id="restartQuizBtn" class="btn btn-secondary mt-3" onclick="restartQuiz()" style="display:none;"><i class="fas fa-redo mr-1"></i>重新開始測驗</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab3" class="tab-content">
+            <div class="interactive-card">
+                <h2 class="text-2xl font-bold mb-4">🎮 打造你的第一個 API (模擬遊戲)</h2>
+                <p class="mb-4">準備好了嗎？讓我們一步步模擬設計一個簡單的「每日笑話」API！這次我們將探索更多操作！</p>
+                
+                <div class="progress-bar-container">
+                    <div id="apiGameProgressBar" class="progress-bar" style="width: 0%;"></div>
+                </div>
+
+                <div id="apiGame">
+                    <div class="game-step active" data-step="1">
+                        <h3 class="text-xl font-semibold mb-3">步驟 1: API 的使命宣言！</h3>
+                        <p class="mb-2">你的「每日笑話 API」主要目的是什麼？</p>
+                        <select id="apiPurpose" class="w-full p-2 border border-gray-300 rounded-md mb-4">
+                            <option value="entertainment">為使用者提供每日輕鬆一笑</option>
+                            <option value="dev_tool">作為開發者練習串接 API 的工具</option>
+                            <option value="content_source">為其他應用程式提供笑話內容</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="nextStep(1)">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
+                    </div>
+
+                    <div class="game-step" data-step="2">
+                        <h3 class="text-xl font-semibold mb-3">步驟 2: 資源命名</h3>
+                        <p class="mb-2">你的 API 主要操作的資源是什麼？(例如：笑話、使用者、產品)。請用英文小寫複數命名。</p>
+                        <input type="text" id="apiResourceName" value="jokes" class="w-full p-2 border border-gray-300 rounded-md mb-4">
+                        <p class="text-sm text-gray-600 mb-2">這將構成你 Endpoint 的基礎，例如 <code>/jokes</code>。</p>
+                        <button class="btn btn-secondary mr-2" onclick="prevStep(2)"><i class="fas fa-arrow-left mr-1"></i>上一步</button>
+                        <button class="btn btn-primary" onclick="nextStep(2)">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
+                    </div>
+                    
+                    <div class="game-step" data-step="3">
+                        <h3 class="text-xl font-semibold mb-3">步驟 3: 選擇「動作」(HTTP Method)</h3>
+                        <p class="mb-2">HTTP Method 告訴伺服器你想要對資源做什麼操作：</p>
+                        <select id="httpMethod" class="w-full p-2 border border-gray-300 rounded-md mb-4" onchange="updateMethodSpecificUI()">
+                            <option value="GET">GET (讀取資料)</option>
+                            <option value="POST">POST (新增資料)</option>
+                            <option value="PUT">PUT (更新資料)</option>
+                            <option value="DELETE">DELETE (刪除資料)</option>
+                        </select>
+                        <div id="methodSpecificInputs" class="mt-3">
+                            </div>
+                        <button class="btn btn-secondary mr-2" onclick="prevStep(3)"><i class="fas fa-arrow-left mr-1"></i>上一步</button>
+                        <button class="btn btn-primary" onclick="nextStep(3)">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
+                    </div>
+
+                    <div class="game-step" data-step="4">
+                        <h3 class="text-xl font-semibold mb-3">步驟 4: 定義資料結構</h3>
+                        <p class="mb-2" id="dataStructureInstruction">你的 API 在回應或請求中，笑話資料包含哪些欄位？</p>
+                        <div class="space-y-2 mb-4">
+                            <div><input type="checkbox" id="dataJokeText" value="text" class="mr-2" checked> <label for="dataJokeText">笑話內容 (text)</label></div>
+                            <div><input type="checkbox" id="dataJokeId" value="id" class="mr-2" checked> <label for="dataJokeId">笑話 ID (id)</label></div>
+                            <div><input type="checkbox" id="dataJokeCategory" value="category" class="mr-2"> <label for="dataJokeCategory">笑話分類 (category)</label></div>
+                        </div>
+                         <div id="requestBodyInputContainer" class="mt-4" style="display:none;">
+                            <label for="requestBody" class="block mb-1 font-medium">
+                                請求內容 (Request Body - JSON 格式)
+                                <span class="tooltip-container">
+                                    <i class="fas fa-info-circle tooltip-icon"></i>
+                                    <span class="tooltip-text">
+                                        在這裡輸入您想透過 API 傳送的資料，例如新增或更新笑話時的內容。
+                                        請確保是有效的 JSON 格式，例如：<br>
+                                        <code>{ "text": "這是一個新笑話", "category": "冷笑話" }</code><br>
+                                        對於 POST，通常不包含 "id" 欄位，系統會自動產生。
+                                        對於 PUT，通常會包含所有您想更新的欄位。
+                                    </span>
+                                </span>
+                            </label>
+                            <textarea id="requestBody" rows="4" class="w-full p-2 border border-gray-300 rounded-md" placeholder='{ "text": "新笑話...", "category": "新分類" }'></textarea>
+                        </div>
+                        <button class="btn btn-secondary mr-2" onclick="prevStep(4)"><i class="fas fa-arrow-left mr-1"></i>上一步</button>
+                        <button class="btn btn-primary" onclick="nextStep(4)">下一步 <i class="fas fa-arrow-right ml-1"></i></button>
+                    </div>
+                    
+                    <div class="game-step" data-step="5">
+                        <h3 class="text-xl font-semibold mb-3">步驟 5: Endpoint 與模擬回應/請求</h3>
+                        <p class="mb-2">根據你的選擇，你的 API Endpoint 和範例請求/回應如下：</p>
+                        <div class="bg-gray-100 p-3 rounded-md mb-2">
+                            <strong>Endpoint:</strong> <code id="apiEndpointPreview" class="text-purple-700"></code>
+                        </div>
+                        <div id="apiRequestPreviewContainer" class="mb-4" style="display:none;">
+                             <h4 class="font-semibold mb-1">模擬請求 (Request Body):</h4>
+                             <pre id="apiRequestPreview" class="code-block"></pre>
+                        </div>
+                        <h4 class="font-semibold mb-1">模擬回應 (Response):</h4>
+                        <pre id="apiResponsePreview" class="code-block"></pre>
+                        <p class="text-sm text-gray-600 mt-2 mb-4">這是一個模擬，實際 API 會與資料庫互動！</p>
+                        <button class="btn btn-secondary mr-2" onclick="prevStep(5)"><i class="fas fa-arrow-left mr-1"></i>上一步</button>
+                        <button class="btn btn-primary" onclick="finishGame()">完成 API 設計！ <i class="fas fa-check ml-1"></i></button>
+                    </div>
+
+                    <div class="game-step" data-step="6">
+                        <h3 class="text-xl font-semibold mb-3 text-green-600"><i class="fas fa-trophy mr-2"></i>恭喜！你已完成 API 設計模擬！</h3>
+                        <p class="mb-2">你設計的「<span id="finalResourceName"></span> API」概要：</p>
+                        <div id="apiSummary" class="p-4 bg-green-50 rounded-lg border border-green-200 space-y-2">
+                            <p><strong>目的:</strong> <span id="summaryPurpose"></span></p>
+                            <p><strong>資源名稱:</strong> <span id="summaryResourceName" class="font-mono"></span></p>
+                            <p><strong>操作 (HTTP Method):</strong> <span id="summaryMethod" class="font-semibold"></span></p>
+                            <p><strong>Endpoint:</strong> <code id="summaryEndpoint" class="text-purple-700"></code></p>
+                            <div id="summaryRequestContainer" style="display:none;">
+                                <p><strong>模擬請求 Body:</strong></p>
+                                <pre id="summaryRequest" class="code-block"></pre>
+                            </div>
+                            <p><strong>模擬回應:</strong></p>
+                            <pre id="summaryResponse" class="code-block"></pre>
+                        </div>
+                        <p class="mt-4 text-gray-700">這只是一個簡化的模擬，真實的 API 設計會涉及更多細節，例如錯誤處理、安全性、版本控制等等。但你已經掌握了核心概念！</p>
+                        <button class="btn btn-primary mt-4" onclick="restartGame()"><i class="fas fa-redo mr-1"></i>重新開始模擬</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab4" class="tab-content">
+             <div class="interactive-card">
+                <h2 class="text-2xl font-bold mb-4">📈 API 的商業價值</h2>
+                <p class="mb-4">API 不僅是技術工具，更是驅動商業成長和創新的重要引擎。以下是一些常見的 API 商業模式：</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-4 bg-blue-50 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-dollar-sign"></i>直接營利</h3>
+                        <p class="text-sm">透過訂閱費、用量計費或利潤分成來產生收入。 (例如：AWS API)</p>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-cogs"></i>支援核心產品</h3>
+                        <p class="text-sm">API 作為核心產品的延伸，增強其功能或整合性。 (例如：Shopify API 讓商家整合其他服務)</p>
+                    </div>
+                    <div class="p-4 bg-yellow-50 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-users"></i>建立生態系</h3>
+                        <p class="text-sm">鼓勵第三方開發者基於你的平台打造應用，擴大影響力。 (例如：Slack API, Facebook API)</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg mb-2 icon-text"><i class="fas fa-store"></i>API 即產品</h3>
+                        <p class="text-sm">API 本身就是公司的主要產品。 (例如：Stripe 支付 API, Twilio 通訊 API)</p>
+                    </div>
+                </div>
+                <p class="mt-6 text-gray-700">成功的 API 策略需要與公司的核心業務目標緊密結合。</p>
+            </div>
+        </div>
+
+        <div id="tab5" class="tab-content">
+            <div class="interactive-card">
+                <h2 class="text-2xl font-bold mb-4">🌟 優秀 API 的特質</h2>
+                <p class="mb-4">一個「好」的 API 能讓開發者輕鬆愉快地使用。以下是一些關鍵特質：</p>
+                <ul class="space-y-3">
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-glasses text-xl"></i><strong class="text-gray-700">清晰性 (Clarity):</strong> 目的明確，設計直觀，易於理解。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-drafting-compass text-xl"></i><strong class="text-gray-700">靈活性 (Flexibility):</strong> 能適應不同的使用案例。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-bolt text-xl"></i><strong class="text-gray-700">強大性 (Power):</strong> 提供的解決方案完整有效。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-magic text-xl"></i><strong class="text-gray-700">易上手性 (Hackability):</strong> 開發者能快速上手並透過實驗學習。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-book-open text-xl"></i><strong class="text-gray-700">優質文件 (Documentation):</strong> 清晰、完整、易於查找的文件和範例。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-cogs text-xl"></i><strong class="text-gray-700">可用性 (Usability):</strong> API 容易被整合和使用。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-tachometer-alt text-xl"></i><strong class="text-gray-700">性能 (Performance):</strong> 快速且可靠的回應。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-shield-alt text-xl"></i><strong class="text-gray-700">安全性 (Security):</strong> 保護資料和系統安全。</li>
+                    <li class="p-3 bg-gray-50 rounded-lg shadow-sm icon-text"><i class="fas fa-history text-xl"></i><strong class="text-gray-700">向後兼容性 (Backward Compatibility):</strong> API 更新時盡量不破壞現有整合。</li>
+                </ul>
+                <p class="mt-6 text-gray-700">打造一個優秀的 API 需要在這些特質間找到平衡，並持續關注開發者的需求。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching logic
+        function openTab(event, tabId) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Quiz logic for Tab 2
+        const quizQuestions = [
+            {
+                question: "如果我想在我的旅遊部落格中加入一個功能，讓使用者可以查詢特定城市的目前氣溫，我最可能需要哪種 API？",
+                options: ["支付處理 API", "天氣預報 API", "社群登入 API"],
+                correctAnswer: "天氣預報 API",
+                feedback: "天氣預報 API 提供即時天氣資訊。"
+            },
+            {
+                question: "我正在開發一個電商網站，需要讓顧客能夠安全地輸入信用卡資訊完成購買，我應該整合哪種類型的 API？",
+                options: ["地圖服務 API", "翻譯 API", "支付處理 API"],
+                correctAnswer: "支付處理 API",
+                feedback: "支付處理 API 專門處理線上交易和付款安全。"
+            },
+            {
+                question: "我的應用程式需要允許使用者使用他們的 Google 帳號快速註冊和登入，這時我會用到什麼 API？",
+                options: ["社群登入 API (例如 OAuth 2.0)", "檔案儲存 API", "影片串流 API"],
+                correctAnswer: "社群登入 API (例如 OAuth 2.0)",
+                feedback: "社群登入 API (如 Google Sign-In) 提供了身份驗證功能。"
+            },
+            {
+                question: "我希望我的應用程式能夠在地圖上顯示附近的餐廳，並提供導航功能，我需要哪種 API？",
+                options: ["股票市場 API", "地圖服務 API", "音樂識別 API"],
+                correctAnswer: "地圖服務 API",
+                feedback: "地圖服務 API (如 Google Maps API) 提供地理位置、地點搜索和導航功能。"
+            }
+        ];
+
+        let currentQuizQuestionIndex = 0;
+        let quizScore = 0;
+        const quizQuestionArea = document.getElementById('quizQuestionArea');
+        const quizResultEl = document.getElementById('quizResult');
+        const nextQuizQuestionBtn = document.getElementById('nextQuizQuestionBtn');
+        const restartQuizBtn = document.getElementById('restartQuizBtn');
+        const quizProgressEl = document.getElementById('quizProgress');
+
+
+        function loadQuizQuestion(index) {
+            quizQuestionArea.innerHTML = ''; // Clear previous question
+            quizResultEl.textContent = '';
+            nextQuizQuestionBtn.style.display = 'none';
+            restartQuizBtn.style.display = 'none';
+            quizProgressEl.textContent = `(第 ${index + 1} / ${quizQuestions.length} 題)`;
+
+
+            if (index >= quizQuestions.length) {
+                // End of quiz
+                quizQuestionArea.innerHTML = `<p class="font-semibold text-lg">測驗完成！</p><p>你答對了 ${quizScore} / ${quizQuestions.length} 題。</p>`;
+                quizProgressEl.textContent = "";
+                restartQuizBtn.style.display = 'inline-flex';
+                return;
+            }
+
+            const q = quizQuestions[index];
+            const questionText = document.createElement('p');
+            questionText.className = 'mb-3';
+            questionText.textContent = q.question;
+            quizQuestionArea.appendChild(questionText);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'space-y-2';
+            q.options.forEach(optionText => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-100';
+                button.textContent = optionText;
+                button.onclick = () => checkQuizAnswer(optionText === q.correctAnswer, button, q.correctAnswer, q.feedback);
+                optionsDiv.appendChild(button);
+            });
+            quizQuestionArea.appendChild(optionsDiv);
+        }
+
+        function checkQuizAnswer(isCorrect, buttonElement, correctAnswerText, feedbackText) {
+            const quizButtons = quizQuestionArea.querySelectorAll('button');
+            quizButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('bg-green-200', 'bg-red-200', 'border-green-500', 'border-red-500', 'bg-green-100', 'border-green-400');
+                 if (btn.textContent === correctAnswerText) {
+                    btn.classList.add('bg-green-100', 'border-green-400'); // Highlight correct answer subtly
+                }
+            });
+
+            if (isCorrect) {
+                quizScore++;
+                quizResultEl.textContent = `🎉 答對了！ ${feedbackText}`;
+                quizResultEl.className = 'mt-3 font-semibold text-green-600';
+                buttonElement.classList.add('bg-green-200', 'border-green-500');
+            } else {
+                quizResultEl.textContent = `🤔 答錯了。正確答案是：${correctAnswerText}。 ${feedbackText}`;
+                quizResultEl.className = 'mt-3 font-semibold text-red-600';
+                buttonElement.classList.add('bg-red-200', 'border-red-500');
+            }
+            
+            if (currentQuizQuestionIndex < quizQuestions.length -1) {
+                nextQuizQuestionBtn.style.display = 'inline-flex';
+            } else {
+                // Last question answered, show restart button directly or after a summary
+                nextQuizQuestionBtn.style.display = 'none'; // Hide next if it's the last question
+                // Display final score immediately or trigger end of quiz display
+                setTimeout(() => { // Slight delay to show feedback before final summary
+                    loadQuizQuestion(quizQuestions.length); // This will trigger the end of quiz display
+                }, 1500);
+            }
+        }
+        
+        function nextQuizQuestion() {
+            currentQuizQuestionIndex++;
+            loadQuizQuestion(currentQuizQuestionIndex);
+        }
+
+        function restartQuiz() {
+            currentQuizQuestionIndex = 0;
+            quizScore = 0;
+            loadQuizQuestion(currentQuizQuestionIndex);
+            restartQuizBtn.style.display = 'none';
+        }
+
+
+        // API Game Logic for Tab 3
+        let currentStep = 1;
+        const totalSteps = 6; // Including the finish step
+        const gameSteps = document.querySelectorAll('#apiGame .game-step');
+        const progressBar = document.getElementById('apiGameProgressBar');
+        const apiData = {
+            resourceId: '123' // Default ID for PUT/DELETE examples
+        }; 
+
+        function updateProgressBar() {
+            const progress = ((currentStep -1) / (totalSteps -1)) * 100;
+            progressBar.style.width = progress + '%';
+        }
+
+        function showStep(stepNumber) {
+            gameSteps.forEach(step => step.classList.remove('active'));
+            const currentStepElement = document.querySelector(`#apiGame .game-step[data-step="${stepNumber}"]`);
+            if (currentStepElement) {
+                currentStepElement.classList.add('active');
+            }
+            currentStep = stepNumber;
+            updateProgressBar();
+            // Special UI updates based on step
+            if (stepNumber === 4) { // Data Structure step
+                const method = apiData.method || 'GET';
+                const instructionEl = document.getElementById('dataStructureInstruction');
+                const requestBodyContainer = document.getElementById('requestBodyInputContainer');
+                if (method === 'POST' || method === 'PUT') {
+                    instructionEl.textContent = '定義請求 Body 中笑話資料的欄位，以及你希望 API 回應的欄位：';
+                    requestBodyContainer.style.display = 'block';
+                    document.getElementById('dataJokeId').checked = false; // ID usually not in POST request body
+                    if(method === 'PUT') document.getElementById('dataJokeId').checked = true; // ID is part of PUT response
+                } else {
+                    instructionEl.textContent = '你的 API 回應中，笑話資料包含哪些欄位？';
+                    requestBodyContainer.style.display = 'none';
+                    document.getElementById('dataJokeId').checked = true; // ID usually in GET response
+                }
+            }
+        }
+        
+        function updateMethodSpecificUI() {
+            const method = document.getElementById('httpMethod').value;
+            const container = document.getElementById('methodSpecificInputs');
+            container.innerHTML = ''; // Clear previous inputs
+
+            if (method === 'PUT' || method === 'DELETE') {
+                const label = document.createElement('label');
+                label.htmlFor = 'resourceIdInput';
+                label.className = 'block mb-1 font-medium';
+                label.textContent = `要 ${method === 'PUT' ? '更新' : '刪除'} 的資源 ID:`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'resourceIdInput';
+                input.value = apiData.resourceId || '123'; // Default or previously stored
+                input.className = 'w-full p-2 border border-gray-300 rounded-md';
+                container.appendChild(label);
+                container.appendChild(input);
+            }
+        }
+
+
+        function nextStep(step) {
+            // Save data from current step
+            if (step === 1) apiData.purpose = document.getElementById('apiPurpose').value;
+            if (step === 2) apiData.resourceName = document.getElementById('apiResourceName').value.trim() || 'jokes';
+            if (step === 3) {
+                apiData.method = document.getElementById('httpMethod').value;
+                if (apiData.method === 'PUT' || apiData.method === 'DELETE') {
+                    apiData.resourceId = document.getElementById('resourceIdInput')?.value || apiData.resourceId;
+                }
+            }
+            if (step === 4) { // Data Structure
+                apiData.dataFields = [];
+                if (document.getElementById('dataJokeText').checked) apiData.dataFields.push('text');
+                if (document.getElementById('dataJokeId').checked) apiData.dataFields.push('id');
+                if (document.getElementById('dataJokeCategory').checked) apiData.dataFields.push('category');
+                
+                if (apiData.method === 'POST' || apiData.method === 'PUT') {
+                    apiData.requestBody = document.getElementById('requestBody').value;
+                }
+            }
+            
+            if (step === 4) { // Before showing step 5 (Endpoint & Preview)
+                generateApiPreviews();
+            }
+
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+
+        function prevStep(step) {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+        
+        function generateApiPreviews() {
+            const endpointPreviewEl = document.getElementById('apiEndpointPreview');
+            const requestPreviewContainer = document.getElementById('apiRequestPreviewContainer');
+            const requestPreviewEl = document.getElementById('apiRequestPreview');
+            const responsePreviewEl = document.getElementById('apiResponsePreview');
+
+            let endpoint = `https://api.example.com/${apiData.resourceName || 'jokes'}`;
+            let response = {};
+            let requestBodySim = null;
+
+            // Mock data
+            const mockJoke = {
+                id: apiData.resourceId || "123",
+                text: "為什麼程式設計師喜歡深色模式？因為光會吸引蟲子(bugs)！",
+                category: "程式梗"
+            };
+            const newMockJoke = {
+                id: "456", // For POST response
+                text: "新笑話：為什麼樹懶過馬路這麼慢？因為牠想慢慢來！",
+                category: "冷笑話"
+            };
+
+            switch (apiData.method) {
+                case 'GET':
+                    if (apiData.dataFields.includes('id')) response.id = mockJoke.id;
+                    if (apiData.dataFields.includes('text')) response.text = mockJoke.text;
+                    if (apiData.dataFields.includes('category')) response.category = mockJoke.category;
+                    if (Object.keys(response).length === 0 && apiData.dataFields.length > 0) response.message = "欄位已選擇，但模擬資料中無對應值。";
+                    else if (apiData.dataFields.length === 0) response.message = "請至少在步驟4選擇一個資料欄位！";
+                    endpoint += `/${apiData.resourceId || mockJoke.id}`; // Typically GET specific resource
+                    requestPreviewContainer.style.display = 'none';
+                    break;
+                case 'POST':
+                    let postRequestBody = {};
+                    postRequestBody.text = newMockJoke.text;
+                    postRequestBody.category = newMockJoke.category;
+                    
+                    try { 
+                        if(apiData.requestBody && apiData.requestBody.trim() !== "") {
+                           const parsedUserBody = JSON.parse(apiData.requestBody);
+                           if (parsedUserBody.hasOwnProperty('text')) postRequestBody.text = parsedUserBody.text;
+                           if (parsedUserBody.hasOwnProperty('category')) postRequestBody.category = parsedUserBody.category;
+                        }
+                    } catch (e) {
+                        postRequestBody.error = "您提供的請求內容格式錯誤，將使用預設範例。";
+                    }
+                    requestBodySim = postRequestBody;
+
+                    if (apiData.dataFields.includes('id')) response.id = newMockJoke.id; 
+                    if (apiData.dataFields.includes('text')) response.text = postRequestBody.text;
+                    if (apiData.dataFields.includes('category')) response.category = postRequestBody.category;
+                    requestPreviewContainer.style.display = 'block';
+                    break;
+                case 'PUT':
+                    endpoint += `/${apiData.resourceId || mockJoke.id}`;
+                     let putRequestBody = {};
+                    putRequestBody.text = "更新後的笑話內容！";
+                    putRequestBody.category = "更新後的分類";
+                    
+                    try { 
+                         if(apiData.requestBody && apiData.requestBody.trim() !== "") {
+                           const parsedUserBody = JSON.parse(apiData.requestBody);
+                           if (parsedUserBody.hasOwnProperty('text')) putRequestBody.text = parsedUserBody.text;
+                           if (parsedUserBody.hasOwnProperty('category')) putRequestBody.category = parsedUserBody.category;
+                        }
+                    } catch (e) {
+                        putRequestBody.error = "您提供的請求內容格式錯誤，將使用預設範例。";
+                    }
+                    requestBodySim = putRequestBody;
+
+                    if (apiData.dataFields.includes('id')) response.id = apiData.resourceId || mockJoke.id; 
+                    if (apiData.dataFields.includes('text')) response.text = putRequestBody.text;
+                    if (apiData.dataFields.includes('category')) response.category = putRequestBody.category;
+                    requestPreviewContainer.style.display = 'block';
+                    break;
+                case 'DELETE':
+                    endpoint += `/${apiData.resourceId || mockJoke.id}`;
+                    response = { message: `資源 ID '${apiData.resourceId || mockJoke.id}' 已成功刪除。` }; 
+                    requestPreviewContainer.style.display = 'none';
+                    break;
+            }
+            
+            endpointPreviewEl.textContent = `${apiData.method} ${endpoint}`;
+            if(requestBodySim && (apiData.method === 'POST' || apiData.method === 'PUT')){ 
+                 requestPreviewEl.textContent = JSON.stringify(requestBodySim, null, 2);
+                 apiData.simulatedRequest = requestBodySim;
+            } else {
+                 requestPreviewContainer.style.display = 'none';
+                 apiData.simulatedRequest = null;
+            }
+            responsePreviewEl.textContent = JSON.stringify(response, null, 2);
+            apiData.simulatedResponse = response;
+            apiData.finalEndpoint = endpoint; 
+        }
+
+        function finishGame() {
+            document.getElementById('summaryPurpose').textContent = apiData.purpose ? document.querySelector(`#apiPurpose option[value="${apiData.purpose}"]`).textContent : '未選擇';
+            document.getElementById('summaryResourceName').textContent = apiData.resourceName || 'jokes';
+            document.getElementById('finalResourceName').textContent = apiData.resourceName || '笑話';
+            document.getElementById('summaryMethod').textContent = apiData.method || 'GET';
+            document.getElementById('summaryEndpoint').textContent = `${apiData.method} ${apiData.finalEndpoint || '未產生'}`;
+            
+            const summaryRequestContainer = document.getElementById('summaryRequestContainer');
+            const summaryRequestEl = document.getElementById('summaryRequest');
+            if (apiData.simulatedRequest && (apiData.method === 'POST' || apiData.method === 'PUT')) {
+                summaryRequestEl.textContent = JSON.stringify(apiData.simulatedRequest, null, 2);
+                summaryRequestContainer.style.display = 'block';
+            } else {
+                summaryRequestContainer.style.display = 'none';
+            }
+            document.getElementById('summaryResponse').textContent = JSON.stringify(apiData.simulatedResponse || {message: "無回應範例"}, null, 2);
+            showStep(totalSteps); 
+        }
+        
+        function restartGame() {
+            Object.keys(apiData).forEach(key => {
+                if (key !== 'resourceId') delete apiData[key];
+            });
+             apiData.resourceId = '123'; 
+
+            document.getElementById('apiPurpose').value = 'entertainment';
+            document.getElementById('apiResourceName').value = 'jokes';
+            document.getElementById('httpMethod').value = 'GET';
+            document.getElementById('dataJokeText').checked = true;
+            document.getElementById('dataJokeId').checked = true;
+            document.getElementById('dataJokeCategory').checked = false;
+            document.getElementById('requestBody').value = '';
+            updateMethodSpecificUI(); 
+            showStep(1);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            openTab({currentTarget: document.querySelector('.tab-button.active')}, 'tab1');
+            // Initialize API Game
+            updateMethodSpecificUI(); 
+            showStep(1); 
+            // Initialize Quiz
+            loadQuizQuestion(currentQuizQuestionIndex);
+        });
+    </script>
+</body>
+</html>
